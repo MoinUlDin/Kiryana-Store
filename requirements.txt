@@ -1,0 +1,2 @@
+# Runtime (Phase 0 needs nothing yet; PyQt6 arrives with the ribbon step)
+PyQt6>=6.7
