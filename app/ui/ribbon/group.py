@@ -55,6 +55,9 @@ class RibbonGroup(QFrame):
             self._collapsed_button.setText(tr(self.title_key))
         self.measure()
 
+    def has_visible_actions(self) -> bool:
+        return any(action.isVisible() for action, _large in self._items)
+
     # ---- modes --------------------------------------------------------
     def measure(self) -> None:
         """Record the width of each mode, then restore the current mode."""

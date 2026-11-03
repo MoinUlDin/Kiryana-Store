@@ -20,8 +20,9 @@ For development, keep data inside the project instead of AppData:
 ## Ribbon shortcuts
 Ctrl+F1 or double-click a tab: collapse / pin the ribbon.
 
-## Users (until the Users screen exists)
-The first launch asks you to create the Super Admin and the Owner. Add cashiers from the terminal:
+## Users
+The first launch asks you to create the Super Admin and the Owner. Cashiers are added from Settings > Users.
+The terminal tool still works for the developer (for example to reset a forgotten Owner password):
 
     python -m tools.manage_users add --username ali --name "Ali Khan" --role cashier
     python -m tools.manage_users list

@@ -58,3 +58,8 @@ QPushButton#PrimaryButton { background: {{primary}}; color: white; border-color:
 QPushButton#PrimaryButton:hover { background: {{primary_light}}; }
 QGroupBox { border: 1px solid {{border}}; border-radius: 4px; margin-top: 12px; padding-top: 10px; }
 QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; }
+
+QTableWidget { background: white; alternate-background-color: #F7F9FB; border: 1px solid {{border}}; gridline-color: {{border}}; }
+QTableWidget::item:selected { background: {{hover}}; color: {{text}}; }
+QHeaderView::section { background: {{panel}}; border: none; border-bottom: 1px solid {{border}}; padding: 6px 8px; font-weight: bold; }
+QLabel#StatusNote { color: {{muted}}; }

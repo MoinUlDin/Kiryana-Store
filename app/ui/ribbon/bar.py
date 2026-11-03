@@ -76,6 +76,19 @@ class RibbonBar(QWidget):
             tab.retranslate(tr)
         self.relayout()
 
+    def refresh_visibility(self) -> None:
+        """Call after permissions or translations change: hides empty groups and tabs."""
+        first_visible = None
+        for index, (_key, tab) in enumerate(self._tabs):
+            shown = tab.update_visibility()
+            self.tab_bar.setTabVisible(index, shown)
+            if shown and first_visible is None:
+                first_visible = index
+        current = self.tab_bar.currentIndex()
+        if first_visible is not None and not self.tab_bar.isTabVisible(current):
+            self.tab_bar.setCurrentIndex(first_visible)
+        self.relayout()
+
     # ---- behaviour ----------------------------------------------------
     def relayout(self) -> None:
         tab = self.body.currentWidget()

@@ -21,6 +21,13 @@ LOCK_AFTER_FAILURES = 5
 LOCK_MINUTES = 5
 
 
+@dataclass(frozen=True)
+class Account:
+    user: User
+    is_active: bool
+    last_login_at: str | None
+
+
 class AuthStatus(Enum):
     OK = "ok"
     INVALID = "invalid"
@@ -57,6 +64,24 @@ class AuthService:
 
     def list_users(self, active_only: bool = True) -> list[User]:
         return [to_user(r) for r in self._users.list(active_only)]
+
+    def list_accounts(self, actor: User) -> list[Account]:
+        """Accounts the actor may see: the Super Admin sees everyone, the Owner sees Owner and cashiers."""
+        if not actor.is_admin:
+            raise PermissionError("only the Owner or Super Admin can list accounts")
+        rows = self._users.list(active_only=False)
+        if actor.role != ROLE_SUPERADMIN:
+            rows = [r for r in rows if r["role"] != ROLE_SUPERADMIN]
+        return [Account(to_user(r), bool(r["is_active"]), r["last_login_at"]) for r in rows]
+
+    def can_manage(self, actor: User, target_role: str) -> bool:
+        """May `actor` reset passwords / enable / disable accounts of this role?"""
+        return actor.role == ROLE_SUPERADMIN or (actor.role == ROLE_OWNER and target_role == ROLE_CASHIER)
+
+    def creatable_roles(self, actor: User) -> list[str]:
+        if actor.role == ROLE_SUPERADMIN:
+            return [ROLE_OWNER, ROLE_CASHIER]
+        return [ROLE_CASHIER] if actor.role == ROLE_OWNER else []
 
     def get_user(self, user_id: int) -> User | None:
         row = self._users.get(user_id)

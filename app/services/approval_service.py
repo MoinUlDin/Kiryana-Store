@@ -47,6 +47,15 @@ class ApprovalGuard:
 
 
 @dataclass(frozen=True)
+class PinInfo:
+    id: int
+    label: str
+    owner_name: str
+    perm_keys: list[str] | None  # None means every approvable action
+    created_at: str
+
+
+@dataclass(frozen=True)
 class Approval:
     approver_name: str
     method: str  # 'password' or 'pin'
@@ -109,6 +118,15 @@ class ApprovalService:
             self._audit.log(actor, "pin.create", entity="pin", entity_id=pin_id,
                             new={"label": label.strip(), "actions": allowed})
         return pin_id
+
+    def list_pins(self, actor: User) -> list[PinInfo]:
+        if not actor.is_admin:
+            raise PermissionError("only the Owner or Super Admin can list PINs")
+        return [
+            PinInfo(r["id"], r["label"], r["owner_name"],
+                    None if r["allowed_actions"] == "*" else json.loads(r["allowed_actions"]), r["created_at"])
+            for r in self._pins.active()
+        ]
 
     def revoke_pin(self, actor: User, pin_id: int) -> None:
         if not actor.is_admin:

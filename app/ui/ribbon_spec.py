@@ -62,6 +62,9 @@ ACTIONS: tuple[ActionDef, ...] = (
     ActionDef("shop_settings", "\uE713"),
     ActionDef("users", "\uE716", perm="users.manage"),
     ActionDef("permissions", "\uE72E", perm="users.manage"),
+    ActionDef("approval_pins", "\uE72E", perm="users.manage"),
+    ActionDef("audit_log", "\uE81C", perm="audit.view"),
+    ActionDef("change_password", "\uE77B"),
     ActionDef("backup_now", "\uE74E", perm="backup.run"),
     ActionDef("switch_language", "\uE774"),
 )
@@ -93,7 +96,7 @@ TABS: tuple[TabSpec, ...] = (
     )),
     TabSpec("settings", (
         GroupSpec("shop", 1, (("shop_settings", True),)),
-        GroupSpec("security", 2, (("users", True), ("permissions", True))),
+        GroupSpec("security", 2, (("users", True), ("permissions", True), ("approval_pins", True), ("audit_log", True), ("change_password", True))),
         GroupSpec("backup", 3, (("backup_now", True),)),
     )),
 )

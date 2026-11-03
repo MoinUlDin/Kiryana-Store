@@ -13,14 +13,26 @@ from app.services.permission_service import Decision
 from app.ui.actions import ActionRegistry
 from app.ui.backstage import BackstageView
 from app.ui.dialogs.secret_prompt import SecretPromptDialog
+from app.ui.dialogs.user_dialogs import PasswordDialog
+from app.ui.errors import error_text
 from app.ui.i18n.manager import I18n
 from app.ui.ribbon.bar import RibbonBar
 from app.ui.ribbon.group import RibbonGroup
 from app.ui.ribbon.tab import RibbonTab
 from app.ui.ribbon_spec import TABS
+from app.ui.pages.audit_page import AuditPage
+from app.ui.pages.permissions_page import PermissionsPage
+from app.ui.pages.pins_page import PinsPage
+from app.ui.pages.users_page import UsersPage
 
 log = logging.getLogger(__name__)
-QUICK_ACCESS = ("new_bill", "hold_bill", "print_bill", "checkout")
+QUICK_ACCESS = ("new_bill", "hold_bill", "print_bill")
+PAGES = {  # action id -> page class (each is created the first time it is opened)
+    "users": UsersPage,
+    "permissions": PermissionsPage,
+    "approval_pins": PinsPage,
+    "audit_log": AuditPage,
+}
 
 
 class MainWindow(QMainWindow):
@@ -65,6 +77,7 @@ class MainWindow(QMainWindow):
         self._welcome.setObjectName("Welcome")
         self._welcome.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.content.addWidget(self._welcome)
+        self._pages: dict[str, QWidget] = {}
         layout.addWidget(self.content, 1)
 
         self.backstage = BackstageView(i18n, central)
@@ -84,11 +97,14 @@ class MainWindow(QMainWindow):
         tr = self.i18n.tr
         self.setWindowTitle(tr("app.title"))
         self.actions.retranslate()
+        self.actions.refresh_permissions(self._visible_for_user)  # before measuring: hidden buttons take no width
         self.ribbon.retranslate()
+        self.ribbon.refresh_visibility()
         self.backstage.retranslate()
         self._welcome.setText(tr("home.welcome"))
         self._user_label.setText(tr("status.user", name=self.user.display_name, role=tr(f"role.{self.user.role}")))
-        self.actions.refresh_permissions(self._visible_for_user)
+        for page in self._pages.values():
+            page.retranslate()
 
     def _visible_for_user(self, perm: str) -> bool:
         """Hide only what this user can never get (not even with an Owner's approval)."""
@@ -103,7 +119,35 @@ class MainWindow(QMainWindow):
         perm = self.actions.perm_for(action_id)
         if perm and not self.guard(perm, name):
             return
-        self.statusBar().showMessage(self.i18n.tr("status.not_ready", name=name), 5000)
+        if action_id in PAGES:
+            self._show_page(action_id)
+        elif action_id == "change_password":
+            self._change_own_password()
+        else:
+            self.statusBar().showMessage(self.i18n.tr("status.not_ready", name=name), 5000)
+
+    def _show_page(self, action_id: str) -> None:
+        page = self._pages.get(action_id)
+        if page is None:
+            page = PAGES[action_id](self.i18n, self.services, self.user)
+            self._pages[action_id] = page
+            self.content.addWidget(page)
+        else:
+            page.refresh()
+        self.content.setCurrentWidget(page)
+        self.statusBar().clearMessage()
+
+    def _change_own_password(self) -> None:
+        def submit(new_password: str, old_password: str | None) -> str | None:
+            try:
+                self.services.auth.change_password(self.user, self.user.id, new_password, old_password)
+            except (ValueError, PermissionError) as exc:
+                return error_text(self.i18n, exc)
+            return None
+
+        dialog = PasswordDialog(self.i18n, self.i18n.tr("password.change.title"), submit, ask_old=True, parent=self)
+        if dialog.exec():
+            self.statusBar().showMessage(self.i18n.tr("password.changed"), 5000)
 
     def guard(self, perm: str, action_name: str) -> bool:
         """True if the user may proceed. Shows the password / Owner-approval prompt when needed.

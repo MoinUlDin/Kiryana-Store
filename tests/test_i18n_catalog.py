@@ -64,3 +64,10 @@ def test_ribbon_spec_permissions_exist():
     for action in ACTIONS:
         if action.perm:
             assert action.perm in PERMS_BY_KEY, (action.id, action.perm)
+
+
+def test_every_permission_has_a_label():
+    from app.domain.permissions import PERMISSIONS
+    keys = load().keys("en")
+    for perm in PERMISSIONS:
+        assert f"perm.{perm.key}" in keys, perm.key
