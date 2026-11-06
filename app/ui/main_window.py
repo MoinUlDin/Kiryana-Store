@@ -21,17 +21,25 @@ from app.ui.ribbon.group import RibbonGroup
 from app.ui.ribbon.tab import RibbonTab
 from app.ui.ribbon_spec import TABS
 from app.ui.pages.audit_page import AuditPage
+from app.ui.pages.alerts_page import AlertsPage
+from app.ui.pages.items_page import ItemsPage
+from app.ui.pages.purchases_page import PurchasesPage
+from app.ui.pages.sale_page import SalePage
 from app.ui.pages.permissions_page import PermissionsPage
 from app.ui.pages.pins_page import PinsPage
 from app.ui.pages.users_page import UsersPage
 
 log = logging.getLogger(__name__)
 QUICK_ACCESS = ("new_bill", "hold_bill", "print_bill")
-PAGES = {  # action id -> page class (each is created the first time it is opened)
-    "users": UsersPage,
-    "permissions": PermissionsPage,
-    "approval_pins": PinsPage,
-    "audit_log": AuditPage,
+PAGE_CLASSES = {"users": UsersPage, "permissions": PermissionsPage, "pins": PinsPage,
+                "audit": AuditPage, "items": ItemsPage, "purchases": PurchasesPage, "alerts": AlertsPage, "sale": SalePage}
+PAGE_FOR_ACTION = {  # ribbon action id -> page key (a page is created the first time it is opened)
+    "users": "users", "permissions": "permissions", "approval_pins": "pins", "audit_log": "audit",
+    "items": "items", "add_item": "items", "adjust_stock": "items", "categories": "items",
+    "brands": "items", "low_stock": "items", "import_excel": "items",
+    "new_purchase": "purchases", "purchase_history": "purchases", "suppliers": "purchases", "expiry": "alerts",
+    "new_bill": "sale", "hold_bill": "sale", "resume_bill": "sale", "find_item": "sale", "discount": "sale",
+    "bill_discount": "sale", "misc_item": "sale", "checkout": "sale",
 }
 
 
@@ -90,6 +98,7 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+F1"), self, activated=self.ribbon.toggle_collapsed)
         i18n.language_changed.connect(self._retranslate)
         self._retranslate()
+        self._show_page("new_bill")      # cashiers start where they work
 
     # ---- text ----------------------------------------------------------
     def _retranslate(self, _code: str = "") -> None:
@@ -119,7 +128,7 @@ class MainWindow(QMainWindow):
         perm = self.actions.perm_for(action_id)
         if perm and not self.guard(perm, name):
             return
-        if action_id in PAGES:
+        if action_id in PAGE_FOR_ACTION:
             self._show_page(action_id)
         elif action_id == "change_password":
             self._change_own_password()
@@ -127,15 +136,18 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.i18n.tr("status.not_ready", name=name), 5000)
 
     def _show_page(self, action_id: str) -> None:
-        page = self._pages.get(action_id)
+        key = PAGE_FOR_ACTION[action_id]
+        page = self._pages.get(key)
         if page is None:
-            page = PAGES[action_id](self.i18n, self.services, self.user)
-            self._pages[action_id] = page
+            page = PAGE_CLASSES[key](self.i18n, self.services, self.user)
+            page.guard = self.guard
+            self._pages[key] = page
             self.content.addWidget(page)
         else:
             page.refresh()
         self.content.setCurrentWidget(page)
         self.statusBar().clearMessage()
+        page.handle_action(action_id)
 
     def _change_own_password(self) -> None:
         def submit(new_password: str, old_password: str | None) -> str | None:
@@ -189,6 +201,9 @@ class MainWindow(QMainWindow):
         self.close()
 
     def closeEvent(self, event) -> None:
+        sale = self._pages.get("sale")
+        if sale is not None:
+            sale.auto_hold()
         try:
             self.i18n.language_changed.disconnect(self._retranslate)
         except TypeError:

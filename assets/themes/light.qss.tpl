@@ -63,3 +63,11 @@ QTableWidget { background: white; alternate-background-color: #F7F9FB; border: 1
 QTableWidget::item:selected { background: {{hover}}; color: {{text}}; }
 QHeaderView::section { background: {{panel}}; border: none; border-bottom: 1px solid {{border}}; padding: 6px 8px; font-weight: bold; }
 QLabel#StatusNote { color: {{muted}}; }
+
+/* Sale screen */
+QLineEdit#SaleCode { font-size: {{title_pt}}pt; padding: 10px 14px; border: 2px solid {{primary}}; border-radius: 6px; }
+QLabel#GrandTotal { font-size: {{total_pt}}pt; font-weight: bold; color: {{primary_dark}}; }
+QLabel#ChangeLabel { font-size: {{title_pt}}pt; font-weight: bold; color: #067647; }
+QLabel#SaleNote { color: {{muted}}; }
+QPushButton#CheckoutButton { background: #067647; color: white; border-color: #067647; font-weight: bold; padding: 12px 24px; font-size: {{title_pt}}pt; }
+QPushButton#CheckoutButton:hover { background: #079455; }

@@ -71,3 +71,39 @@ def test_every_permission_has_a_label():
     keys = load().keys("en")
     for perm in PERMISSIONS:
         assert f"perm.{perm.key}" in keys, perm.key
+
+
+def test_every_movement_kind_has_a_label():
+    kinds = ("opening", "purchase", "sale", "return_restock", "void_restore",
+             "adjust_damage", "adjust_loss", "adjust_expiry", "adjust_count", "quick_fix")
+    keys = load().keys("en")
+    for kind in kinds:
+        assert f"move.{kind}" in keys, kind
+
+
+def _source_files():
+    root = Path(__file__).resolve().parent.parent / "app"
+    return [p for p in root.rglob("*.py")]
+
+
+def test_every_translation_key_used_in_the_ui_exists():
+    """Catches a typo or a forgotten string before a user sees a raw key like 'error.sale_stock_short'."""
+    keys = load().keys("en")
+    pattern = re.compile(r"""\btr\(\s*["']([A-Za-z0-9_.]+)["']\s*[,)]""")   # whole literal keys only; 'unit.' + x is built at runtime
+    missing = []
+    for path in _source_files():
+        for key in pattern.findall(path.read_text(encoding="utf-8")):
+            if key not in keys:
+                missing.append(f"{path.name}: {key}")
+    assert missing == []
+
+
+def test_every_error_code_raised_by_the_services_has_a_translation():
+    keys = load().keys("en")
+    pattern = re.compile(r"""(?:ValidationError|RowIssue|SpreadsheetError)\(\s*["']([A-Za-z0-9_.]+)["']""")
+    missing = []
+    for path in _source_files():
+        for code in pattern.findall(path.read_text(encoding="utf-8")):
+            if code not in keys:
+                missing.append(f"{path.name}: {code}")
+    assert missing == []

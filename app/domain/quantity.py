@@ -42,6 +42,19 @@ class Quantity:
         return cls(int(scaled))
 
     @classmethod
+    def from_small_unit(cls, value: Number) -> "Quantity":
+        """Whole grams (for kg items) or whole millilitres (for litre items): 250 g -> Quantity(250)."""
+        if isinstance(value, (bool, float)):
+            raise TypeError("floats are not allowed for quantities; pass str, int or Decimal")
+        try:
+            amount = Decimal(value)
+        except (InvalidOperation, ValueError) as exc:
+            raise ValueError(f"not a valid quantity: {value!r}") from exc
+        if not amount.is_finite() or amount != amount.to_integral_value():
+            raise ValueError("grams and millilitres must be whole numbers")
+        return cls(int(amount))
+
+    @classmethod
     def for_amount(cls, amount: Money, unit_price: Money) -> "Quantity":
         """How much can `amount` buy at `unit_price` per base unit?
 

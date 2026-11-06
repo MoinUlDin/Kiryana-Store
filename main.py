@@ -38,6 +38,8 @@ def main() -> int:
         fonts.load_fonts(paths.fonts_dir())
 
         services = build_services(conn)
+        for problem in services.stock.check_invariants():  # SRS: integrity check on startup
+            log.error("STOCK INTEGRITY: %s", problem)
         i18n = I18n(Catalog.load_dir(I18N_DIR), SettingsRepo(conn).get("language", DEFAULT_LANGUAGE))
 
         # Connected first, so it runs before any window re-translates itself.

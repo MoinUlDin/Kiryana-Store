@@ -13,3 +13,8 @@ def to_iso(moment: datetime) -> str:
 
 def from_iso(text: str) -> datetime:
     return datetime.fromisoformat(text.replace("Z", "+00:00"))
+
+
+def local_today_iso() -> str:
+    """The shop's business date (local time), as YYYY-MM-DD."""
+    return datetime.now().date().isoformat()

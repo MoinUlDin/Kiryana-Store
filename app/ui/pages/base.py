@@ -15,6 +15,7 @@ class Page(QWidget):
     def __init__(self, i18n: I18n, parent=None) -> None:
         super().__init__(parent)
         self.i18n = i18n
+        self.guard = lambda perm, action_name: True  # the main window replaces this with the real gate
         self.layout_ = QVBoxLayout(self)
         self.layout_.setContentsMargins(24, 18, 24, 18)
         self.layout_.setSpacing(10)
@@ -36,6 +37,9 @@ class Page(QWidget):
 
     def refresh(self) -> None:
         """Reload data from the services."""
+
+    def handle_action(self, action_id: str) -> None:
+        """A ribbon action that targets this page (permission already checked)."""
 
     def say(self, text: str, error: bool = False) -> None:
         self.note.setObjectName("ErrorLabel" if error else "StatusNote")

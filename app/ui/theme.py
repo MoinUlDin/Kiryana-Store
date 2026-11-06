@@ -15,9 +15,9 @@ COMMON = {
 }
 # Nastaleeq glyphs are tall, so Urdu mode gets a bigger font and roomier controls.
 PER_LANGUAGE = {
-    "en": {"font_pt": 10, "small_pt": 8, "title_pt": 18, "tab_pad": "6px 14px", "file_pad": "6px 20px",
+    "en": {"font_pt": 10, "small_pt": 8, "title_pt": 18, "total_pt": 30, "tab_pad": "6px 14px", "file_pad": "6px 20px",
            "btn_pad": "3px 6px", "nav_pad": "10px 16px"},
-    "ur": {"font_pt": 13, "small_pt": 10, "title_pt": 22, "tab_pad": "8px 16px", "file_pad": "8px 22px",
+    "ur": {"font_pt": 13, "small_pt": 10, "title_pt": 22, "total_pt": 34, "tab_pad": "8px 16px", "file_pad": "8px 22px",
            "btn_pad": "4px 8px", "nav_pad": "12px 16px"},
 }
 

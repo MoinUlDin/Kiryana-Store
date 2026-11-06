@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QStackedWidget, QTabBar, QToolButton, QVBoxLayout, QWidget
 
 from app.ui.glyphs import glyph_icon
 from app.ui.i18n.manager import I18n
@@ -45,8 +45,13 @@ class RibbonBar(QWidget):
         self.tab_bar.currentChanged.connect(self._on_tab_changed)
         self.tab_bar.tabBarClicked.connect(self._on_tab_clicked)
         self.tab_bar.installEventFilter(self)
-        header_layout.addWidget(self.tab_bar)
-        header_layout.addStretch(1)
+        # The tab bar gets ALL the free width (stretch factor 1) instead of a spacer taking it.
+        # Otherwise Qt sizes the bar from its hint at a moment when tab texts, font and stylesheet are
+        # not final yet, concludes it is too narrow and shows scroll arrows even on a maximised window.
+        self.tab_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.tab_bar.setUsesScrollButtons(False)   # arrows are never wanted; tabs shorten (elide) if truly cramped
+        self.tab_bar.setElideMode(Qt.TextElideMode.ElideRight)
+        header_layout.addWidget(self.tab_bar, 1)
         self.collapse_button = QToolButton(header)  # visible alternative to double-click / Ctrl+F1
         self.collapse_button.setObjectName("RibbonCollapse")
         self.collapse_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -74,6 +79,7 @@ class RibbonBar(QWidget):
         for index, (title_key, tab) in enumerate(self._tabs):
             self.tab_bar.setTabText(index, tr(title_key))
             tab.retranslate(tr)
+        self.tab_bar.updateGeometry()
         self.relayout()
 
     def refresh_visibility(self) -> None:
@@ -87,6 +93,7 @@ class RibbonBar(QWidget):
         current = self.tab_bar.currentIndex()
         if first_visible is not None and not self.tab_bar.isTabVisible(current):
             self.tab_bar.setCurrentIndex(first_visible)
+        self.tab_bar.updateGeometry()
         self.relayout()
 
     # ---- behaviour ----------------------------------------------------
